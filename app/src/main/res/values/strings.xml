@@ -1,0 +1,10 @@
+<resources>
+
+    <string name="app_name">WeatherNovosib19</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="item_name">Погода в Новосибирске</string>
+    <string name="current_time">SomeText</string>
+    <string name="button_download_weather">Обновить</string>
+    <string name="not_data">Нет данных</string>
+</resources>
