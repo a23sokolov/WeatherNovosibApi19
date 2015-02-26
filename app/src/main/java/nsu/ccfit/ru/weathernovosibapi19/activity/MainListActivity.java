@@ -282,6 +282,7 @@ public class MainListActivity extends Activity {
                     bigM.put(ATTRIBUTE_RELVET,"Относительная влажность: "+eElementRelvet.getAttribute(TAG_max));
                     bigM.put(ATTRIBUTE_HEAT,"Комфортная температура: "+eElementHeat.getAttribute(TAG_min)+".."+eElementHeat.getAttribute(TAG_max));
                     bigData.add(bigM);
+
                 }
             }
             return null;
