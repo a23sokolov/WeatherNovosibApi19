@@ -1,18 +1,20 @@
-package nsu.ccfit.ru.weathernovosibapi19;
+package nsu.ccfit.ru.weathernovosibapi19.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -22,6 +24,9 @@ import org.w3c.dom.NodeList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import nsu.ccfit.ru.weathernovosibapi19.GetXmlFromUrl;
+import nsu.ccfit.ru.weathernovosibapi19.R;
 
 
 public class MainListActivity extends Activity {
@@ -34,12 +39,15 @@ public class MainListActivity extends Activity {
     private final String ATTRIBUTE_DATE = "date";
     private final String ATTRIBUTE_DAY_TIME = "day_time";
     private final String ATTRIBUTE_MASSIVE_OF_DATA = "data";
+    private final String INTERNET_IS_NOT_AVAILABLE = "Отсутсвует интернет соединения";
+    private final String DATA_RELOAD = "Даные обновились";
     String[] from = { ATTRIBUTE_DATE, ATTRIBUTE_DAY_TIME,
             ATTRIBUTE_MASSIVE_OF_DATA };
     // массив ID View-компонентов, в которые будут вставлять данные
     int[] to = { R.id.tvDate, R.id.tvTimeDay, R.id.tvDataLook };
     private static ArrayList<Map<String, String>> data = null;
     private static ArrayList<Map<String,String>> bigData = null;
+    private static View viewText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,11 +57,10 @@ public class MainListActivity extends Activity {
         data = new ArrayList<Map<String, String>>();
         bigData = new ArrayList<Map<String, String>>();
         simpleAdapter = new SimpleAdapter(this,data,R.layout.item,from,to);
+        viewText = findViewById(R.id.tvDataNotDownload);
         mt = (NewTask)getLastNonConfigurationInstance();
-        Log.d("Chech NewTask"," cheking");
         if (mt == null) {
             mt = new NewTask(data,bigData,simpleAdapter);
-            Log.d("Chech NewTask is null ","yes");
         }
         mt.link(this);
         lvSimple.addFooterView(getLayoutInflater().inflate(R.layout.button_footer,null));
@@ -101,17 +108,36 @@ public class MainListActivity extends Activity {
 
     public void onClickButton(View v)
     {
-        //mt = new NewTask(data,bigData,simpleAdapter);
+        if(!isInternetAvailable())
+        {
+            Toast.makeText(this, INTERNET_IS_NOT_AVAILABLE,Toast.LENGTH_SHORT).show();
+            return;
+        }
         if(mt.getStatus()==AsyncTask.Status.FINISHED)
         {
             MainListActivity activity = (MainListActivity)mt.getActivity();
             mt = new NewTask(data,bigData,simpleAdapter);
             mt.link(activity);
+            mt.execute();
+            Toast.makeText(this, DATA_RELOAD,Toast.LENGTH_SHORT).show();
         }
-        mt.execute();
-        View view = findViewById(R.id.tvDataNotDownload);
-        if(view !=null)
-            ((LinearLayout)view.getParent()).removeView(view);
+        else if(mt.getStatus()==AsyncTask.Status.RUNNING)
+        {
+            return;
+        }
+        else
+            mt.execute();
+    }
+
+    public boolean isInternetAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        // Get Network Info from connectivity Manager
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+
+        // if no network is available networkInfo will be null
+        // otherwise check if we are connected
+        return networkInfo != null && networkInfo.isConnected();
 
     }
     protected void onResume() {
@@ -124,6 +150,8 @@ public class MainListActivity extends Activity {
     }
     public static void setBigData(ArrayList<Map<String, String>> bigData1)
     {
+        if(viewText.getVisibility()!=View.GONE)
+            viewText.setVisibility(View.GONE);
         bigData.clear();
         bigData.addAll(bigData1);
     }
@@ -199,6 +227,9 @@ public class MainListActivity extends Activity {
         {
             GetXmlFromUrl getXmlFromUrl = new GetXmlFromUrl(url);
             Document doc = getXmlFromUrl.getXMLSign();
+            if(doc==null) {
+                return null;
+            }
             NodeList nListForecast = doc.getElementsByTagName(FORECAST);
             NodeList nListTemperature = doc.getElementsByTagName(TEMPERATURE);
             NodeList nListPhenomena = doc.getElementsByTagName(PHENOMENA);
@@ -258,6 +289,11 @@ public class MainListActivity extends Activity {
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
+            if(bigData.size()==0)
+            {
+                Toast.makeText(getActivity(),"Нет интернет соединения",Toast.LENGTH_SHORT).show();
+                return;
+            }
             MainListActivity.setBigData(bigData);
             simpleAdapter.notifyDataSetChanged();
         }

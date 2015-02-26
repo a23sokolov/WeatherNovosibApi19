@@ -1,9 +1,11 @@
-package nsu.ccfit.ru.weathernovosibapi19;
+package nsu.ccfit.ru.weathernovosibapi19.activity;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import nsu.ccfit.ru.weathernovosibapi19.R;
 
 /**
  * Created by Android on 22.11.2014.
